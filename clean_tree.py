@@ -9,6 +9,7 @@ import subprocess
 import string
 import random
 import argparse, os
+import pandas as pd
 from argparse   import ArgumentParser
 from subprocess import Popen
 
@@ -49,8 +50,8 @@ def execute_log(command):
         retcode = proc.returncode
         
         return str(out), err, retcode
-    except OSError, e:
-        print "%r %r returned %r" % (command, e)
+    except e:
+        print("%r %r returned %r" % (command, e))
         raise
 
 def extant_file(x):
@@ -87,37 +88,28 @@ def execute_mpileup(header, bam_file, pileupfile, Quality_thresh):
     
 def chromosome_table(bam_file,bam_folder,file_name, log_output):
     
-    cmd = subprocess.Popen(["samtools", "idxstats", bam_file], stdout=subprocess.PIPE)
-    
-    out, err = cmd.communicate()
-    dictionary = {}
-    total_reads = 0
-    for i in out.split('\n'):
-        line = i.split('\t')
-        
-        if line[0] is not '*' and len(line[0]) > 0:
-            dictionary[line[0]] = float(line[2])
-            
-    total_perc = sum(dictionary.values())
-    total = 0
     output = bam_folder+'/'+file_name+'.chr'
-    output_handel = open(output, "w")
-    output_handel.write( 'chr\treads\tperc')
-    output_handel.write('\n')
-    for key,value in dictionary.items():
-        perc = (float(value)/total_perc)*100
-        total_reads += int(value)        
-        output_handel.write('{}\t{}\t{}%'.format(key, int(value), round(perc,2)))        
-        output_handel.write('\n')                
-    output_handel.write('total:\t{}'.format(total_reads))    
-    output_handel.close()
-         
-    out = out.split()
-    if 'Y' in out:
-        return "Y", total_reads
+    tmp_output = "tmp_bam.txt"
+
+    f = open(tmp_output, "w")
+    subprocess.call(["samtools", "idxstats",bam_file], stdout=f)
+    df_chromosome = pd.read_table(tmp_output, header=None)
+    total_reads = sum(df_chromosome[2])
+    df_chromosome["perc"] = (df_chromosome[2]/total_reads)*100
+    df_chromosome = df_chromosome.round(decimals=2)
+    df_chromosome['perc'] = df_chromosome['perc'].astype(str) + '%'
+    df_chromosome = df_chromosome.drop(columns=[1,3])
+    df_chromosome.columns = ['chr','reads','perc']    
+    df_chromosome.to_csv(output, index=None, sep="\t")
     
-    elif 'chrY' in out:
-        return "chrY", total_reads
+    cmd = "rm "+tmp_output
+    subprocess.call(cmd, shell=True)
+
+    if 'Y' in df_chromosome["chr"].values:
+        return "Y", total_reads    
+    elif 'chrY' in df_chromosome["chr"].values:
+        return "chrY", total_reads    
+        
     
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
@@ -147,7 +139,7 @@ def create_tmp_dirs(folder):
     if os.path.isdir(folder):    
         while(flag):
             print("WARNING! File "+folder+" already exists, \nWould you like to remove it?")
-            choice = raw_input("y/n: ")            
+            choice = input("y/n: ")            
             if str(choice) == "y":
                 
                 cmd = 'rm -r '+folder
@@ -214,7 +206,6 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     execute_mpileup(header, bam_file, pileupfile, Quality_thresh)    
             
       
-    
     print("--- %.2f seconds in run PileUp ---" % (time.time() - start_time))
     
     
@@ -240,7 +231,6 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     print("--- %.2f seconds in extracting haplogroups --- " % (time.time() - start_time) )
     print("--- %.2f seconds to run clean_tree  ---" % (time.time() - whole_time))
     
-total_reads = 0
 
 if __name__ == "__main__":
             

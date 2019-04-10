@@ -37,10 +37,9 @@ The Netherlands
 
     `Rscript install.r`
 
-3. Usage example for Clean Tree
-
-    BAM
-        python clean_tree.py -bam file.bam -out out -r 1 -q 20 -b 90
+3. Usage example for Clean Tree BAM file
+    
+        python clean_tree.py -bam file.bam -out out -r 1 -q 20 -b 95
 
 4. Usage for haplogroup prediction
 
