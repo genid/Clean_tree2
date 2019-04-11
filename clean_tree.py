@@ -13,17 +13,24 @@ import pandas as pd
 from argparse   import ArgumentParser
 from subprocess import Popen
 
-
 def get_arguments():
 
     parser = ArgumentParser(description="ERASMUS MC \n Clean tree 2.0 for Y chromosome ")    
     parser.add_argument("-bam", "--Bamfile",
-        dest="Bamfile", required=False, type=extant_file,
-        help="input BAM file", metavar="FILE")    
+        dest="Bamfile", required=False, type=file_exists,
+        help="input BAM file", metavar="PATH")    
     
     parser.add_argument("-out", "--output",
             dest="Outputfile", required=True,                        
-            help="Output folder name", metavar="FILE")
+            help="Folder name containing outputs", metavar="STRING")
+    
+    parser.add_argument("-hg", "--HG_out",
+            dest="HG_out", required=True,                        
+            help="Table with HG predictions", metavar="STRING")
+    
+    parser.add_argument("-int", "--Intermediate",
+        dest="Intermediate", required=True, type=file_exists,
+        help="Path with intermediate haplogroups branches", metavar="DIR")    
     
     parser.add_argument("-r", "--Reads_thresh",
             help="The minimum number of reads for each base",
@@ -54,15 +61,15 @@ def execute_log(command):
         print("%r %r returned %r" % (command, e))
         raise
 
-def extant_file(x):
+def file_exists(file):
     """
     'Type' for argparse - checks that file exists but does not open.
     """
-    if not os.path.exists(x):
+    if not os.path.exists(file):
         # Argparse uses the ArgumentTypeError to give a rejection message like:
-        # error: argument input: x does not exist
-        raise argparse.ArgumentTypeError("{0} does not exist".format(x))
-    return x
+        # error: argument input: file does not exist
+        raise argparse.ArgumentTypeError("{0} does not exist".format(file))
+    return file
     
         
 def execute_mpileup(header, bam_file, pileupfile, Quality_thresh):
@@ -109,7 +116,6 @@ def chromosome_table(bam_file,bam_folder,file_name, log_output):
         return "Y", total_reads    
     elif 'chrY' in df_chromosome["chr"].values:
         return "chrY", total_reads    
-        
     
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
@@ -154,8 +160,7 @@ def create_tmp_dirs(folder):
                 return False
                                   
             else:
-                print("Please type y or n")
-                               
+                print("Please type y or n")                               
     else:
         cmd = 'mkdir '+folder
         subprocess.call(cmd, shell=True)
@@ -230,8 +235,14 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     
     print("--- %.2f seconds in extracting haplogroups --- " % (time.time() - start_time) )
     print("--- %.2f seconds to run clean_tree  ---" % (time.time() - whole_time))
-    
+    return Outputfile
 
+def identify_haplogroup(path_file, intermediate, output):
+    
+    cmd = "python predict_haplogroup.py -input {} -int {} -out {}".format(path_file, intermediate, output)
+    print(cmd)
+    subprocess.call(cmd, shell=True)                    
+    
 if __name__ == "__main__":
             
     whole_time = time.time()
@@ -260,6 +271,7 @@ if __name__ == "__main__":
                     folder_name = get_folder_name(path_file)
                     folder = os.path.join(app_folder,out_folder,folder_name)                            
                     if create_tmp_dirs(folder):                                            
-                        samtools(folder, folder_name, bam_file, args.Quality_thresh)
+                        output_file = samtools(folder, folder_name, bam_file, args.Quality_thresh)
+                identify_haplogroup(out_folder, args.Intermediate, args.HG_out)                                                                        
     else:
         print("--- Clean tree finished... ---")
