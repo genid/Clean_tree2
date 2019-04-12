@@ -58,10 +58,10 @@ def get_hg_root(hg):
     list_hg = []
     for i in hg:
         list_hg.append(i)
-    collections_hg = collections.Counter(list_hg)
-    #init_hg = max(collections_hg.items(), key=operator.itemgetter(1))[0]
+    collections_hg = collections.Counter(list_hg)    
     try:
-        init_hg = max(collections_hg)
+        init_hg = max(collections_hg.items(), key=operator.itemgetter(1))[0]
+        #init_hg = max(collections_hg)
         return init_hg[0]
     except:
         return "Not-available"
@@ -283,7 +283,8 @@ if __name__ == "__main__":
                 output = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(out_name,putative_hg,out_hg,qc_score,qc_one,qc_two,qc_three)                                                            
             else:
                 log_output.append(out_name)                        
-                output = "{}\tNA\tNA\t0\t0\t0\t0".format(out_name)                                
+                #output = "{}\tNA\tNA\t0\t0\t0\t0".format(out_name)                                
+                output = "{}\tNA\tNA\t{}\t{}\t{}\t{}".format(out_name,qc_score,qc_one,qc_two,qc_three)                                                            
         w_file = open(out_file, "a")    
         if h_flag:                
             h_flag = False
