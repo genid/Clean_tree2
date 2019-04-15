@@ -287,6 +287,7 @@ if(nrow(marker_pileup) > 0){
   colnames(marker_pileup)[17] <- "called_base"
   colnames(marker_pileup)[18] <- "state"
   new_marker_pileup <- marker_pileup[c(1:7,14,16:18)]
+  new_marker_pileup <- new_marker_pileup[order(new_marker_pileup$haplogroup),]
   write.table(new_marker_pileup, file=Outputfile, sep='\t', quote=FALSE, row.names=FALSE)  
   
 }else{

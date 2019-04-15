@@ -18,10 +18,6 @@ def get_arguments():
     parser.add_argument("-input", "--Input",
         dest="Input", required=True, type=file_exists,
         help="Output file or path produced from Clean tree or Yleaf", metavar="FILE")    
-    
-    parser.add_argument("-int", "--Intermediate",
-        dest="Intermediate", required=True, type=file_exists,
-        help="Path with intermediate haplogroups root", metavar="FILE")    
         
     parser.add_argument("-out", "--Outfile",
             dest="Outputfile", required=True,                        
@@ -56,15 +52,21 @@ def get_hg_root(hg):
     Choose the haplogroup based on the highest count and branch depth (E.x. J2a21 = J)
     """
     list_hg = []
+    init_hg = "NA"
     for i in hg:
         list_hg.append(i)
     collections_hg = collections.Counter(list_hg)    
-    try:
-        init_hg = max(collections_hg.items(), key=operator.itemgetter(1))[0]
-        #init_hg = max(collections_hg)
-        return init_hg[0]
+    try:        
+        hg_dict = {}
+        for c in collections_hg:    
+            if c[0] not in hg_dict:
+                hg_dict[c[0]] = collections_hg[c]
+            else:
+                hg_dict[c[0]] += collections_hg[c]
+        init_hg = max(iter(hg_dict.items()), key=operator.itemgetter(1))[0]                
+        return init_hg    
     except:
-        return "Not-available"
+        return init_hg
     
 def get_intermediate_branch(init_hg,path_hg_prediction_tables):
     
@@ -93,9 +95,10 @@ def calc_score_one(df_intermediate,df_haplogroup):
                 correct_state += np.sum(i[1] == tmp["state"])                                                
                 total += len(tmp)        
     try:
-        return round((correct_state / total),3)
+        qc_one = round((correct_state / total),3)
     except ZeroDivisionError as error:
-        return 0.0
+        qc_one =  0.0
+    return qc_one
 
 def get_putative_hg_list(hg, df_haplogroup):
     """ 
@@ -111,17 +114,17 @@ def get_putative_hg_list(hg, df_haplogroup):
     save the number of count and calculate QC2
     """
     list_main_hg = sorted(list(set(hg)), reverse=False)
-    hg_threshold = 0.70    
+    hg_threshold = 0.75    
     dict_hg = {}
     for putative_hg in list_main_hg:
         total_qctwo = len(df_haplogroup.loc[df_haplogroup["haplogroup"] == putative_hg])
-        Ahg = np.sum("A" == df_haplogroup.loc[df_haplogroup["haplogroup"] == putative_hg]["state"])
-        try:
-            qc_two = round((total_qctwo-Ahg)/total_qctwo,3)
-        except ZeroDivisionError as error:
-            qc_two = 0.0
-        if qc_two >= hg_threshold:            
-            dict_hg[putative_hg] = qc_two       
+        Ahg = np.sum("A" == df_haplogroup.loc[df_haplogroup["haplogroup"] == putative_hg]["state"])        
+        if total_qctwo == 0:
+            return dict_hg
+        else:            
+            qc_two = round((total_qctwo-Ahg)/total_qctwo,2)                
+            if qc_two >= hg_threshold:                        
+                dict_hg[putative_hg] = [qc_two,calc_score_three(df_haplogroup,putative_hg)]
     return dict_hg
         
 def get_putative_hg(dict_hg):
@@ -136,7 +139,8 @@ def get_putative_hg(dict_hg):
             dict_hg.pop(list_putative_hg[i],None)
             #print(list_putative_hg[i])
     if len(list_putative_hg) > 0:
-        list_putative_hg = list(dict_hg.keys())
+        print(dict_hg)
+        list_putative_hg = list(dict_hg.keys())        
         putative_hg = max(dict_hg.keys(), key=len)    
         qc_two = dict_hg[putative_hg]
     
@@ -151,9 +155,7 @@ def calc_score_three(df_haplogroup,putative_hg):
     the count of how many of these appear and this will give the total count. Substract 
     the ones found from the corrected and this will give the QC.3 score. 
     """
-    qc_three = 0.0
-    a_match = 0
-    total_match = 0
+    
     
     list_main_hg_all = []
     list_hg_all = df_haplogroup["haplogroup"].values
@@ -163,18 +165,20 @@ def calc_score_three(df_haplogroup,putative_hg):
     list_main_hg_all = sorted(list(set(list_main_hg_all)), reverse=True)
     df_main_hg_all = df_haplogroup.loc[df_haplogroup["haplogroup"].isin(list_main_hg_all)]
     df_main_hg_all = df_main_hg_all[["haplogroup","state","marker_name"]]
-    df_main_hg_all = df_main_hg_all.sort_values(by="haplogroup", ascending=False).values
-
+    df_main_hg_all = df_main_hg_all.sort_values(by="haplogroup", ascending=False).values        
+    qc_three = 0.0
+    a_match = 0
+    total_match = 0
     for putative_hg in [putative_hg]:
+        #print(putative_hg)
         for i in df_main_hg_all:
-            #tmp_hg = i[0].replace("~","")
-            tmp_hg = i[0]
-            if tmp_hg in putative_hg:
+            tmp_hg = i[0].replace("~","")
+            if tmp_hg in putative_hg and tmp_hg != putative_hg:
                 total_match +=1        
                 if i[1] == "A":
                     a_match += 1
         try:
-            qc_three = round((total_match - a_match) / total_match,3)
+            qc_three = round((total_match - a_match) / total_match,3)        
         except ZeroDivisionError as error:
             qc_three = 0.0
     
@@ -214,15 +218,15 @@ if __name__ == "__main__":
     samples = check_if_folder(path_samples,'.out')                                                 
     
     out_file = args.Outputfile    
-    
-    path_hg_prediction_tables = args.Intermediate
-    intermediate_tree_table = path_hg_prediction_tables+"Intermediates.txt"    
+        
+    hg_intermediate = "Hg_Prediction_tables/"    
+    intermediate_tree_table = hg_intermediate+"Intermediates.txt"    
     
     h_flag = True            
     log_output = []
     for sample_name in samples:
         #print(sample_name)
-        
+        putative_hg = "NA"
         out_name = sample_name.split("/")[-1]
         out_name = out_name.split(".")[0]
         
@@ -241,7 +245,7 @@ if __name__ == "__main__":
         hg = df_tmp["haplogroup"].values                
         
         init_hg = get_hg_root(hg)           
-        df_intermediate = get_intermediate_branch(init_hg,path_hg_prediction_tables)
+        df_intermediate = get_intermediate_branch(init_hg,hg_intermediate)
         
         qc_one = calc_score_one(df_intermediate,df_haplogroup)                            
         
@@ -250,10 +254,18 @@ if __name__ == "__main__":
         hg = df_derived[(df_derived.haplogroup.str.startswith(init_hg))].haplogroup.values        
         
         dict_hg = get_putative_hg_list(hg, df_haplogroup)                
-        
-        putative_hg, qc_two = get_putative_hg(dict_hg)        
-        
-        qc_three = calc_score_three(df_haplogroup,putative_hg)        
+        hg_threshold = 0.75        
+        dict_key = sorted(dict_hg.keys(), reverse=True)
+        for i in dict_key:    
+            if (np.array(dict_hg[i][0]) >= hg_threshold) and np.array(dict_hg[i][1]) >= hg_threshold:
+                putative_hg = i
+                qc_two = dict_hg[i][0]
+                qc_three = dict_hg[i][1]                
+                break
+            
+            
+        #putative_hg, qc_two = get_putative_hg(dict_hg)                        
+        #qc_three = calc_score_three(df_haplogroup,putative_hg)        
         
         putative_ancestral_hg = get_putative_ancenstral_hg(df_haplogroup, putative_hg )
         
@@ -291,9 +303,9 @@ if __name__ == "__main__":
             w_file.write(header)            
         w_file.write("\n")        
         w_file.write(output)
-        w_file.close()    
+        w_file.close()        
     if len(log_output) > 0:
         print("Warning: Following sample(s) showed discrepancies, please check output(s) manually: ")        
-        print("\n\t".join(log_output))
+        print("\n".join(log_output))
     print("--- Clean tree 'Y-Haplogroup Extraction' finished... ---")
     

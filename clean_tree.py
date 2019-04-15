@@ -22,15 +22,7 @@ def get_arguments():
     
     parser.add_argument("-out", "--output",
             dest="Outputfile", required=True,                        
-            help="Folder name containing outputs", metavar="STRING")
-    
-    parser.add_argument("-hg", "--HG_out",
-            dest="HG_out", required=True,                        
-            help="Table with HG predictions", metavar="STRING")
-    
-    parser.add_argument("-int", "--Intermediate",
-        dest="Intermediate", required=True, type=file_exists,
-        help="Path with intermediate haplogroups branches", metavar="DIR")    
+            help="Folder name containing outputs", metavar="STRING")            
     
     parser.add_argument("-r", "--Reads_thresh",
             help="The minimum number of reads for each base",
@@ -70,7 +62,6 @@ def file_exists(file):
         # error: argument input: file does not exist
         raise argparse.ArgumentTypeError("{0} does not exist".format(file))
     return file
-    
         
 def execute_mpileup(header, bam_file, pileupfile, Quality_thresh):
     
@@ -93,7 +84,7 @@ def execute_mpileup(header, bam_file, pileupfile, Quality_thresh):
         #print cmd
         subprocess.call(cmd, shell=True)
     
-def chromosome_table(bam_file,bam_folder,file_name, log_output):
+def chromosome_table(bam_file,bam_folder,file_name):
     
     output = bam_folder+'/'+file_name+'.chr'
     tmp_output = "tmp_bam.txt"
@@ -157,8 +148,7 @@ def create_tmp_dirs(folder):
                 
             elif str(choice) == "n":                
                 flag = False                
-                return False
-                                  
+                return False                                  
             else:
                 print("Please type y or n")                               
     else:
@@ -207,7 +197,7 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     Outputfile = folder+"/"+folder_name+".out"    
     log_output = folder+"/"+folder_name+".log"
     emf_output = folder+"/"+folder_name+".fmf"
-    header,total_reads = chromosome_table(bam_file,folder,file_name, log_output)
+    header,total_reads = chromosome_table(bam_file,folder,file_name)
     execute_mpileup(header, bam_file, pileupfile, Quality_thresh)    
             
       
@@ -237,9 +227,9 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     print("--- %.2f seconds to run clean_tree  ---" % (time.time() - whole_time))
     return Outputfile
 
-def identify_haplogroup(path_file, intermediate, output):
+def identify_haplogroup(path_file, output):
     
-    cmd = "python predict_haplogroup.py -input {} -int {} -out {}".format(path_file, intermediate, output)
+    cmd = "python predict_haplogroup.py -input {} -out {}".format(path_file, output)
     print(cmd)
     subprocess.call(cmd, shell=True)                    
     
@@ -251,9 +241,10 @@ if __name__ == "__main__":
     args = get_arguments()    
     app_folder = os.path.dirname(os.path.realpath(__file__))    
     sam_file    = ''
-    folder_name = ''
+    folder_name = ''                
+    
     out_path    = args.Outputfile    
-    cwd         = os.getcwd()    
+    cwd         = os.getcwd()        
     if os.path.isabs(out_path):
         out_folder = out_path
     else:
@@ -271,7 +262,8 @@ if __name__ == "__main__":
                     folder_name = get_folder_name(path_file)
                     folder = os.path.join(app_folder,out_folder,folder_name)                            
                     if create_tmp_dirs(folder):                                            
-                        output_file = samtools(folder, folder_name, bam_file, args.Quality_thresh)
-                identify_haplogroup(out_folder, args.Intermediate, args.HG_out)                                                                        
+                        output_file = samtools(folder, folder_name, bam_file, args.Quality_thresh)                        
+                hg_out = out_folder+"/"+out_path+".hg"
+                identify_haplogroup(out_folder, hg_out)                                                                        
     else:
         print("--- Clean tree finished... ---")
