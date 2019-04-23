@@ -362,10 +362,10 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     if not os.path.exists(bam_file+'.bai'): 
         
         bam_file_order = folder+"/"+folder_name+".order.bam"                        
-        cmd = "samtools sort -m 2G -@ {} {} > {}".format(bam_file, bam_file_order)        
+        cmd = "samtools sort -m 2G {} > {}".format(bam_file, bam_file_order)        
         print("\tSorting Bam file...")        
         subprocess.call(cmd, shell=True)
-        cmd = "samtools index -@ {} {}".format(bam_file_order)        
+        cmd = "samtools index {}".format(bam_file_order)        
         subprocess.call(cmd, shell=True)                
         bam_file = bam_file_order
                     
