@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 
 def get_arguments():
 
-    parser = ArgumentParser(description="Erasmus MC: Genetic Identification\n Y-Haplogroup Extraction")    
+    parser = ArgumentParser(description="Erasmus MC: Genetic Identification\n Y-Haplogroup Prediction")    
     
     parser.add_argument("-input", "--Input",
         dest="Input", required=True, type=file_exists,
@@ -210,7 +210,7 @@ def get_putative_ancenstral_hg(df_haplogroup, putative_hg):
 
 if __name__ == "__main__":
     
-    print("\tY-Haplogroup Extraction")
+    print("\tY-Haplogroup Prediction")
     
     args = get_arguments()                
     
