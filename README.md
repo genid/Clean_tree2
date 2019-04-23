@@ -8,17 +8,15 @@ The Netherlands
 # Requirements
 
     Operating system: Linux only. Tested on Ubuntu 16.04LTS, but should also work on newer version of Ubuntu. It should be easy to made it work on other Linux distributions. 
-    Python, R, wget, git.
+    Python, wget
     Internet connection during installation (for downloading and extracting hg19 reference genome).
     Data storage: For installation we recommend a storage capacity of > 10 GB. 
 
 # Installation
 
 1. Install dependencies, you can skip this step if these packages are already installed on your system
-
-            apt-get install git-core 
-	    apt-get install python2.7 
-            apt-get install r-base 
+            
+	    apt-get install python3.6             
             apt-get install mawk 
             apt-get install p7zip-full 
             apt-get install bwa
@@ -33,11 +31,11 @@ The Netherlands
             5. make
             6. make install
 
-2. Usage example for Clean Tree BAM file
+### Usage example for Clean Tree (BAM format)
     
         python clean_tree.py -bam file.bam -out out -r 1 -q 20 -b 95
 
-3. Usage for haplogroup prediction
+### Usage for haplogroup prediction
 
 	python predict_haplogroup.py -input Output_files/ -out output.hg
 	
