@@ -25,9 +25,6 @@ def get_arguments():
     parser.add_argument("-bam", "--Bamfile",
         dest="Bamfile", required=False, type=file_exists,
         help="input BAM file", metavar="PATH")    
-    
-    #parser.add_argument("-ref", "--reference",  dest="reference",
-    #        help="Build Genome Assembly \n [hg19-hg38]", metavar="STRING", required=True)    
 
     parser.add_argument("-out", "--output",
             dest="Outputfile", required=True,                        
@@ -358,9 +355,7 @@ def extract_haplogroups(path_Markerfile, Reads_thresh, Base_majority,
     df_out.to_csv(Outputfile, sep="\t", index=False)
 
 def samtools(folder, folder_name, bam_file, Quality_thresh):
-    
-    #Change this file to Concatenate from the parameter you give    
-    #args.Markerfile =  'Position_files/'+args.reference+'.txt'                        
+        
     args.Markerfile = "data/positions.txt"
 
     start_time = time.time()    
@@ -387,6 +382,10 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     start_time = time.time()            
     extract_haplogroups(args.Markerfile, args.Reads_thresh, args.Base_majority, 
                             pileupfile, log_output, fmf_output, Outputfile)
+    
+    cmd = "rm {};".format(pileupfile)
+    subprocess.call(cmd, shell=True)                
+        
     print("--- %.2f seconds in extracting haplogroups --- " % (time.time() - start_time) )
     print("--- %.2f seconds to run Clean tree  ---" % (time.time() - whole_time))
     

@@ -195,7 +195,8 @@ def get_putative_ancenstral_hg(df_haplogroup, putative_hg):
     Should report all of them only if there are different haplogroup name with the resolution
     """    
     putative_ancestral_hg = []        
-    df_putative_ancestral_hg = df_haplogroup[df_haplogroup.haplogroup.str.startswith(putative_hg)]
+    df_putative_ancestral_hg = df_haplogroup[~df_haplogroup.haplogroup.isin([putative_hg])]
+    df_putative_ancestral_hg = df_putative_ancestral_hg[df_putative_ancestral_hg.haplogroup.str.startswith(putative_hg)]        
     df_putative_ancestral_hg = df_putative_ancestral_hg[df_putative_ancestral_hg.state == "A"]
     
     for i in df_putative_ancestral_hg.index:    
