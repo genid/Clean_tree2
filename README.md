@@ -33,21 +33,17 @@ The Netherlands
             5. make
             6. make install
 
-2. Install required R packages
-
-    `Rscript install.r`
-
-3. Usage example for Clean Tree BAM file
+2. Usage example for Clean Tree BAM file
     
         python clean_tree.py -bam file.bam -out out -r 1 -q 20 -b 95
 
-4. Usage for haplogroup prediction
+3. Usage for haplogroup prediction
 
-	python predict_haplogroup.py -input Output_files/ -int Hg_Prediction_tables/ -out HG00096.hg
+	python predict_haplogroup.py -input Output_files/ -out output.hg
 	
-5. See complete manual at the website:
+4. See complete manual at the website:
     https://www.erasmusmc.nl/genetic_identification/resources/
 
-6. Bug report
+5. Bug report
 
 Please email me at d.montielgonzalez@erasmusmc.nl when there is a problem getting the software up and running.
