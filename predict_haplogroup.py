@@ -229,8 +229,9 @@ if __name__ == "__main__":
     
     out_file = args.Outputfile    
         
-    hg_intermediate = "Hg_Prediction_tables/"    
-    intermediate_tree_table = hg_intermediate+"Intermediates.txt"    
+    home_source = os.path.dirname(os.path.realpath(__file__))
+    hg_intermediate = home_source+"/Hg_Prediction_tables/"    
+    intermediate_tree_table = hg_intermediate+"Intermediates.txt"        
     
     h_flag = True            
     log_output = []

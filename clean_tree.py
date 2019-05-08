@@ -35,6 +35,9 @@ def get_arguments():
             dest="Outputfile", required=True,                        
             help="Folder name containing outputs", metavar="STRING")            
     
+    parser.add_argument("-pos", "--position",  dest="position",
+            help="Positions file [hg19.txt or hg38.txt]", metavar="PATH", required=True)    
+    
     parser.add_argument("-r", "--Reads_thresh",
             help="The minimum number of reads for each base",
             type=int, required=False,
@@ -359,9 +362,8 @@ def extract_haplogroups(path_Markerfile, Reads_thresh, Base_majority,
     df_fmf.to_csv(fmf_output, sep="\t", index=False)
     df_out.to_csv(Outputfile, sep="\t", index=False)
 
-def samtools(folder, folder_name, bam_file, Quality_thresh):
-        
-    args.Markerfile = "data/positions.txt"
+def samtools(folder, folder_name, bam_file, Quality_thresh, Markerfile):
+            
 
     start_time = time.time()    
     if not os.path.exists(bam_file+'.bai'): 
@@ -385,7 +387,7 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     print("--- %.2f seconds in run PileUp ---" % (time.time() - start_time))    
     
     start_time = time.time()            
-    extract_haplogroups(args.Markerfile, args.Reads_thresh, args.Base_majority, 
+    extract_haplogroups(Markerfile, args.Reads_thresh, args.Base_majority, 
                             pileupfile, log_output, fmf_output, Outputfile)
     
     cmd = "rm {};".format(pileupfile)
@@ -396,9 +398,10 @@ def samtools(folder, folder_name, bam_file, Quality_thresh):
     
     return Outputfile
 
-def identify_haplogroup(path_file, output):
+def identify_haplogroup(app_folder, path_file, output):
     
-    cmd = "python predict_haplogroup.py -input {} -out {}".format(path_file, output)
+    script = app_folder+"/predict_haplogroup.py"
+    cmd = "python {} -input {} -out {}".format(script, path_file, output)    
     print(cmd)
     subprocess.call(cmd, shell=True)                    
     
@@ -431,8 +434,8 @@ if __name__ == "__main__":
                     folder_name = get_folder_name(path_file)
                     folder = os.path.join(app_folder,out_folder,folder_name)                            
                     if create_tmp_dirs(folder):                                            
-                        output_file = samtools(folder, folder_name, bam_file, args.Quality_thresh)                        
+                        output_file = samtools(folder, folder_name, bam_file, args.Quality_thresh, args.position)                        
                 hg_out = out_folder+"/"+out_path+".hg"
-                identify_haplogroup(out_folder, hg_out)                                                                        
+                identify_haplogroup(app_folder, out_folder, hg_out)                                                                        
     else:
         print("--- Clean tree finished... ---")

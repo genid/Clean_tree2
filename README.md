@@ -35,7 +35,7 @@
 
 ## Usage example for Clean Tree (BAM format)
     
-        python clean_tree.py -bam file.bam -out out -r 1 -q 20 -b 95
+        python clean_tree.py -bam file.bam -pos Position_files/positions.txt -out out -r 1 -q 20 -b 95
 
 ## Usage for haplogroup prediction
 
