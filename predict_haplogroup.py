@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
-#-- Diego Montiel 2019
-#-- Genetics Identificacion Group @ Erasmus MC  --
-#-- Haplogroup prediction
+# Copyright (C) 2017-2019 Diego Montiel Gonzalez
+# Erasmus Medical Center
+# Department of Genetic Identification
+#
+# License: GNU General Public License v3 or later
+# A copy of GNU GPL v3 should have been included in this software package in LICENSE.txt.
+
+# Script for Haplogroup prediction Clean treev2
 
 import pandas as pd
 import numpy as np
